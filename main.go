@@ -1,32 +1,105 @@
-// Go is a statically typed language, which means that you need to declare the type of a variable when you create it. You can use the var keyword to declare a variable, followed by the variable name and the type. For example:
-
-// this is a syntatic sugar for declaring a variable and assigning a value to it in one line. The type of the variable is inferred from the value that you assign to it. For example:
-// var conferenceName = "Go conference" becomes conferenceName := "Go conference"
 package main
-import "fmt"
 
+import (
+	"fmt"
+	"sync"
+	"time"
+)
 
-func main() {
-	var conferenceName = "Go conference"
-	const conferenceTickets = 50
-	const remainingTickets = 50
+const conferenceTickets uint = 50
+const conferenceName = "Go Conference"
 
-    fmt.Printf("Welcome to,   %v  booking application!\n", conferenceName)
-	fmt.Printf("We have a total of %v tickets and %v tickets are still available.\n", conferenceTickets, remainingTickets)
-	fmt.Println("Get your tickets here to attend.")
+var remainingTickets uint = 50
+var bookings = make([]UserData, 0)
 
-	var userName string
-	var userTickets int 
-
-
-	// ask user for their name 
-	fmt.Scan(&userName)  // pointers ... oh.. lovely 
-	userTickets = 2
-	fmt.Printf("user %v booked booked %v tickets\n", userName, userTickets)
-
-
-
-
-
+type UserData struct {
+	firstName       string
+	lastName        string
+	email           string
+	numberOfTickets uint
 }
 
+var wg = sync.WaitGroup{}
+
+func main() {
+
+	greetUsers()
+
+	firstName, lastName, email, userTickets := getUserInput()
+
+	bookTicket(userTickets, firstName, lastName, email)
+
+	wg.Add(1)
+	go sendTicket(userTickets, firstName, lastName, email)
+
+	firstNames := getFirstNames()
+	fmt.Printf("The first names of bookings are: %v\n", firstNames)
+
+	wg.Wait()
+}
+
+func greetUsers() {
+	fmt.Printf("Welcome to %v booking application\n", conferenceName)
+	fmt.Printf("We have %v tickets and %v are still available\n", conferenceTickets, remainingTickets)
+	fmt.Println("Get your tickets here to attend")
+}
+
+func getFirstNames() []string {
+	firstNames := []string{}
+	for _, booking := range bookings {
+		firstNames = append(firstNames, booking.firstName)
+	}
+	return firstNames
+}
+
+func getUserInput() (string, string, string, uint) {
+
+	var firstName string
+	var lastName string
+	var email string
+	var userTickets uint
+
+	fmt.Println("Enter your first name:")
+	fmt.Scan(&firstName)
+
+	fmt.Println("Enter your last name:")
+	fmt.Scan(&lastName)
+
+	fmt.Println("Enter your email:")
+	fmt.Scan(&email)
+
+	fmt.Println("Enter number of tickets:")
+	fmt.Scan(&userTickets)
+
+	return firstName, lastName, email, userTickets
+}
+
+func bookTicket(userTickets uint, firstName string, lastName string, email string) {
+
+	remainingTickets = remainingTickets - userTickets
+
+	var userData = UserData{
+		firstName:       firstName,
+		lastName:        lastName,
+		email:           email,
+		numberOfTickets: userTickets,
+	}
+
+	bookings = append(bookings, userData)
+
+	fmt.Printf("Thank you %v %v for booking %v tickets.\n", firstName, lastName, userTickets)
+	fmt.Printf("%v tickets remaining for %v\n", remainingTickets, conferenceName)
+}
+
+func sendTicket(userTickets uint, firstName string, lastName string, email string) {
+
+	time.Sleep(5 * time.Second)
+
+	var ticket = fmt.Sprintf("%v tickets for %v %v", userTickets, firstName, lastName)
+
+	fmt.Println("####################")
+	fmt.Println("Sending ticket:", ticket, "to email:", email)
+	fmt.Println("####################")
+
+	wg.Done()
+}
