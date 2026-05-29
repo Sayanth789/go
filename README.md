@@ -1,4 +1,4 @@
-## What is GO ?
+## What is GO ? 🚗 🔥
 
 * Go was created at Google in 2007 and released publicly in 2009.
 * Go is a statically typed, compiled programming language.
